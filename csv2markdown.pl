@@ -27,17 +27,26 @@ close(IN);
 # We want this to be double quote aware as well as comma aware.
 # The handiest way to do that is to start with the double quotes.
 
-my @outer_array; # This will be an array of arrays. Line arrays pushed into here.
+my $outer_array = {}; # This will be an array of arrays. Line arrays pushed into here.
+my $line_cnt = 0;
 foreach my $line ( @lines ) {
   # Let's note the actual pairs before the split so we can find them,
   # even if they contain commas.
   my @quote_sets;
   foreach($line =~ /(".*?")/g){
-    push @quote_sets, $_;
+    my $aa = $_;
+    $aa =~ s/"//g;
+    push @quote_sets, $aa;
   }
   print "size of quote_sets = ", scalar(@quote_sets), "\n";
   # Do the split.
   my @quote_array = split /"/, $line;
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+  print "For line $line_cnt, quote_array is:\n";
+  map { print "==>$_<==\n"; } @quote_array;
+  print "And quote_sets is:\n";
+  map { print "\t==>$_<==\n"; } @quote_sets; print "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 
   my @full_line_array;
   if( scalar(@quote_array) > 1) { # more than one element if quotes present
@@ -58,6 +67,9 @@ foreach my $line ( @lines ) {
     }
     # Now all other positions.
     foreach my $chunk ( @quote_array ) {
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+      print "chunk = $chunk\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
       my $chkcnt = 0;
       map { $chkcnt = 1 if $chunk eq $_; } @quote_sets;
       if($chkcnt) {
@@ -69,17 +81,29 @@ foreach my $line ( @lines ) {
     }
   } else { # only one element after the quote split, so no quotes, so easy!
     @full_line_array = split /,/, @quote_array;
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+    print "full_line_array = ";
+    map {print "$_ ";} @full_line_array; print "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   }
-  push @outer_array, @full_line_array;
+  $outer_array->{"$line_cnt"} = \@full_line_array;
+  $line_cnt++;
 }
 
 # Formatting Time!
 # We need to know how many columns and how big they are.
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+#map { print $outer_array->{"$_"} }
+print "outerarraything ", $outer_array->{"0"}, "\n";
+print "outer array keys = ", keys %{$outer_array}, "\n";
+print "outer array keys size = ", scalar(keys %{$outer_array}), "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 my @colCnt;
-for(my $i=0; $i < scalar(@outer_array); $i++) {
-  for(my $j=0; $j < scalar($outer_array[$i]); $j++) {
-    my $col_length = length(@{@outer_array[$i]}[$j]);
-    if($col_length > $colCnt[$j]) {
+for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
+  for(my $j=0; $j < scalar(@{$outer_array->{$i}}); $j++) {
+    my $col_length = length($outer_array->{"$i"}->[$j]);
+    print "i = $i, j= $j, col_length = $col_length\n";
+    if($col_length > $colCnt[$j] || !defined $colCnt[$j]) {
       $colCnt[$j] = $col_length;
     }
   }
@@ -93,15 +117,16 @@ for(my $i=0; $i < scalar(@outer_array); $i++) {
 #printLine(shift @outer_array, \@colCnt);
 
 print "lines size is ", scalar(@lines), "\n";
-print "outer_array size is ", scalar(@outer_array), "\n";
+print "outer_array size is ", scalar(keys %{$outer_array}), "\n";
 print "colCnt size is ", scalar(@colCnt), "\n";
 map { print "$_\n"; } @colCnt;
 
 # Now the breaker line
-print "-" x $colCnt[0] . $padspace;
-map { print "|" . $padspace . "-" x $colCnt[$_]; } 0 .. scalar(@colCnt)-1;
+print "-" x ($colCnt[0]+$padspace);
+map { print "|" . "-" x ($colCnt[$_]+$padspace); } 0 .. scalar(@colCnt)-1;
+print "\n";
 
 # And the rest
-for(my $i=0; $i < scalar(@outer_array); $i++) {
+for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
 #  printLine($outer_array[$i], \@colCnt);
 }
