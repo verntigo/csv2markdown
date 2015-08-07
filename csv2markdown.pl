@@ -14,7 +14,7 @@ my $header  = 1;
 
 my $infile = shift;
 
-my $padspace = ' ' x $padding;
+#my $padspace = ' ' x $padding;
 
 open IN, "<$infile" or die "Can't open file $infile for reading.\n";
 
@@ -80,12 +80,12 @@ foreach my $line ( @lines ) {
       }
     }
   } else { # only one element after the quote split, so no quotes, so easy!
-    @full_line_array = split /,/, @quote_array;
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-    print "full_line_array = ";
-    map {print "$_ ";} @full_line_array; print "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+    @full_line_array = split /,/, $quote_array[0];
   }
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+  print "full_line_array = ";
+  map {print "$_ ";} @full_line_array; print "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   $outer_array->{"$line_cnt"} = \@full_line_array;
   $line_cnt++;
 }
@@ -100,7 +100,7 @@ print "outer array keys size = ", scalar(keys %{$outer_array}), "\n";
 #####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 my @colCnt;
 for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
-  for(my $j=0; $j < scalar(@{$outer_array->{$i}}); $j++) {
+  for(my $j=0; $j < scalar(@{$outer_array->{$i}})-1; $j++) {
     my $col_length = length($outer_array->{"$i"}->[$j]);
     print "i = $i, j= $j, col_length = $col_length\n";
     if($col_length > $colCnt[$j] || !defined $colCnt[$j]) {
@@ -114,19 +114,40 @@ for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
 # of the content lines, header or otherwise, is fundamentally the same, so
 # use a function to do that.
 # Here's the header.
-#printLine(shift @outer_array, \@colCnt);
+printLine($outer_array->{"0"}, \@colCnt, $padding);
 
-print "lines size is ", scalar(@lines), "\n";
-print "outer_array size is ", scalar(keys %{$outer_array}), "\n";
-print "colCnt size is ", scalar(@colCnt), "\n";
+#print "lines size is ", scalar(@lines), "\n";
+#print "outer_array size is ", scalar(keys %{$outer_array}), "\n";
+#print "colCnt size is ", scalar(@colCnt), "\n";
 map { print "$_\n"; } @colCnt;
 
 # Now the breaker line
-print "-" x ($colCnt[0]+$padspace);
-map { print "|" . "-" x ($colCnt[$_]+$padspace); } 0 .. scalar(@colCnt)-1;
+print "colCnt0 = $colCnt[0] and padding = $padding\n";
+print "-" x ($colCnt[0]+$padding);
+map { print "|" . "-" x ($colCnt[$_]+2*$padding); } 1 .. scalar(@colCnt)-1;
 print "\n";
 
 # And the rest
-for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
-#  printLine($outer_array[$i], \@colCnt);
+for(my $i=1; $i < scalar(keys %{$outer_array}); $i++) {
+  printLine($outer_array->{"$i"}, \@colCnt, $padding);
+}
+
+sub printLine {
+  my $lineRef    = shift; # Array reference for the line contents
+  my $colSizeRef = shift; # Array reference for the column sizes
+  my $paddingNum = shift;
+
+  #print "lineRef thing: $lineRef\n";
+  #print "colSizeRef thing: ", $colSizeRef->[0], "\n";
+  print "$lineRef->[0]" . " " x ($colSizeRef->[0]-length($lineRef->[0])) . " " x $paddingNum . "|";
+  for( my $i=1; $i < scalar(@{$lineRef})-1; $i++) {
+    print " " x $paddingNum;
+    print "$lineRef->[$i]" . " " x ($colSizeRef->[$i]-length($lineRef->[$i]));
+
+    if( $i < scalar(@{$lineRef})-2 ) {
+      print " " x $paddingNum . "|";
+    } else {
+      print "\n";
+    }
+  }
 }
