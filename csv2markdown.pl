@@ -139,6 +139,11 @@ sub printLine {
 
   #print "lineRef thing: $lineRef\n";
   #print "colSizeRef thing: ", $colSizeRef->[0], "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+  my $loopCnt = 0;
+  my @cnts;
+  my @refs;
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   print "$lineRef->[0]" . " " x ($colSizeRef->[0]-length($lineRef->[0])) . " " x $paddingNum . "|";
   for( my $i=1; $i < scalar(@{$lineRef})-1; $i++) {
     print " " x $paddingNum;
@@ -149,5 +154,14 @@ sub printLine {
     } else {
       print "\n";
     }
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+    push @refs, scalar(@{$lineRef});
+    push @cnts, $loopCnt;
+    $loopCnt++;
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   }
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+  print "refs: ", @refs, "\n";
+  print "cnts: ", @cnts, "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 }
