@@ -38,7 +38,14 @@ foreach my $line ( @lines ) {
     $aa =~ s/"//g;
     push @quote_sets, $aa;
   }
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   print "size of quote_sets = ", scalar(@quote_sets), "\n";
+#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
+  # Since we're pulling out the quote sets by splitting on double quotes first,
+  # We should eliminate commas attached to quotes so we don't end up with extra
+  # elements when we later split against commas.
+  $line =~ s/,"/"/g;
+  $line =~ s/[^\\]",/"/g; # Excludes backslash-escaped double quotes
   # Do the split.
   my @quote_array = split /"/, $line;
 #####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
@@ -145,11 +152,11 @@ sub printLine {
   my @refs;
 #####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   print "$lineRef->[0]" . " " x ($colSizeRef->[0]-length($lineRef->[0])) . " " x $paddingNum . "|";
-  for( my $i=1; $i < scalar(@{$lineRef})-1; $i++) {
+  for( my $i=1; $i < scalar(@{$lineRef}); $i++) {
     print " " x $paddingNum;
     print "$lineRef->[$i]" . " " x ($colSizeRef->[$i]-length($lineRef->[$i]));
 
-    if( $i < scalar(@{$lineRef})-2 ) {
+    if( $i < scalar(@{$lineRef})-1 ) {
       print " " x $paddingNum . "|";
     } else {
       print "\n";
