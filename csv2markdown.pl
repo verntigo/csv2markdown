@@ -30,6 +30,7 @@ close(IN);
 my $outer_array = {}; # This will be an array of arrays. Line arrays pushed into here.
 my $line_cnt = 0;
 foreach my $line ( @lines ) {
+  chomp($line);
   # Let's note the actual pairs before the split so we can find them,
   # even if they contain commas.
   my @quote_sets;
@@ -38,9 +39,6 @@ foreach my $line ( @lines ) {
     $aa =~ s/"//g;
     push @quote_sets, $aa;
   }
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-  print "size of quote_sets = ", scalar(@quote_sets), "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   # Since we're pulling out the quote sets by splitting on double quotes first,
   # We should eliminate commas attached to quotes so we don't end up with extra
   # elements when we later split against commas.
@@ -48,12 +46,6 @@ foreach my $line ( @lines ) {
   $line =~ s/[^\\]",/"/g; # Excludes backslash-escaped double quotes
   # Do the split.
   my @quote_array = split /"/, $line;
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-  print "For line $line_cnt, quote_array is:\n";
-  map { print "==>$_<==\n"; } @quote_array;
-  print "And quote_sets is:\n";
-  map { print "\t==>$_<==\n"; } @quote_sets; print "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 
   my @full_line_array;
   if( scalar(@quote_array) > 1) { # more than one element if quotes present
@@ -69,14 +61,12 @@ foreach my $line ( @lines ) {
     }
     # If there's a double quote at the end...
     # the last element will be empty.
-    if($quote_array[-1] eq '') {
+    if($quote_array[scalar(@quote_array)-1] eq '') {
+      # This conditional should never actually execute because end-of-line delimiters are ignored
       pop @quote_array; # toss the last element
     }
     # Now all other positions.
     foreach my $chunk ( @quote_array ) {
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-      print "chunk = $chunk\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
       my $chkcnt = 0;
       map { $chkcnt = 1 if $chunk eq $_; } @quote_sets;
       if($chkcnt) {
@@ -89,27 +79,16 @@ foreach my $line ( @lines ) {
   } else { # only one element after the quote split, so no quotes, so easy!
     @full_line_array = split /,/, $quote_array[0];
   }
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-  print "full_line_array = ";
-  map {print "$_ ";} @full_line_array; print "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   $outer_array->{"$line_cnt"} = \@full_line_array;
   $line_cnt++;
 }
 
 # Formatting Time!
 # We need to know how many columns and how big they are.
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-#map { print $outer_array->{"$_"} }
-print "outerarraything ", $outer_array->{"0"}, "\n";
-print "outer array keys = ", keys %{$outer_array}, "\n";
-print "outer array keys size = ", scalar(keys %{$outer_array}), "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 my @colCnt;
 for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
-  for(my $j=0; $j < scalar(@{$outer_array->{$i}})-1; $j++) {
+  for(my $j=0; $j < scalar(@{$outer_array->{$i}}); $j++) {
     my $col_length = length($outer_array->{"$i"}->[$j]);
-    print "i = $i, j= $j, col_length = $col_length\n";
     if($col_length > $colCnt[$j] || !defined $colCnt[$j]) {
       $colCnt[$j] = $col_length;
     }
@@ -123,14 +102,8 @@ for(my $i=0; $i < scalar(keys %{$outer_array}); $i++) {
 # Here's the header.
 printLine($outer_array->{"0"}, \@colCnt, $padding);
 
-#print "lines size is ", scalar(@lines), "\n";
-#print "outer_array size is ", scalar(keys %{$outer_array}), "\n";
-#print "colCnt size is ", scalar(@colCnt), "\n";
-map { print "$_\n"; } @colCnt;
-
 # Now the breaker line
-print "colCnt0 = $colCnt[0] and padding = $padding\n";
-print "-" x ($colCnt[0]+$padding);
+print "-" x ($colCnt[0]+2*$padding);
 map { print "|" . "-" x ($colCnt[$_]+2*$padding); } 1 .. scalar(@colCnt)-1;
 print "\n";
 
@@ -144,14 +117,7 @@ sub printLine {
   my $colSizeRef = shift; # Array reference for the column sizes
   my $paddingNum = shift;
 
-  #print "lineRef thing: $lineRef\n";
-  #print "colSizeRef thing: ", $colSizeRef->[0], "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-  my $loopCnt = 0;
-  my @cnts;
-  my @refs;
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-  print "$lineRef->[0]" . " " x ($colSizeRef->[0]-length($lineRef->[0])) . " " x $paddingNum . "|";
+  print " " x $paddingNum . "$lineRef->[0]" . " " x ($colSizeRef->[0]-length($lineRef->[0])) . " " x $paddingNum . "|";
   for( my $i=1; $i < scalar(@{$lineRef}); $i++) {
     print " " x $paddingNum;
     print "$lineRef->[$i]" . " " x ($colSizeRef->[$i]-length($lineRef->[$i]));
@@ -161,14 +127,5 @@ sub printLine {
     } else {
       print "\n";
     }
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-    push @refs, scalar(@{$lineRef});
-    push @cnts, $loopCnt;
-    $loopCnt++;
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
   }
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
-  print "refs: ", @refs, "\n";
-  print "cnts: ", @cnts, "\n";
-#####DEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUGDEBUG
 }
